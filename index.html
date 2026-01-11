@@ -2,93 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Global 👑</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Piano Casino Global Pro</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Arial', sans-serif; margin: 0; overflow: hidden; text-align: center; }
-        .dashboard { height: 100px; background: #111; border-bottom: 2px solid #00f2ff; display: flex; flex-direction: column; justify-content: center; }
-        .profit-text { color: #00ff88; font-size: 22px; font-weight: bold; }
-        #game-area { height: calc(100vh - 100px); width: 100%; position: relative; background: #050505; }
-        .lane { position: absolute; width: 25%; height: 100%; border-right: 1px solid #222; }
-        .tile { position: absolute; width: 100%; height: 100px; background: #00f2ff; box-shadow: 0 0 15px #00f2ff; border-radius: 5px; cursor: pointer; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
+        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid #00f2ff; }
+        #game-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #eee; display: flex; }
+        .lane { flex: 1; height: 100%; border-right: 1px solid #ccc; position: relative; }
+        .tile { position: absolute; width: 100%; height: 150px; background: #000; cursor: pointer; border-bottom: 1px solid #333; }
+        .tile-clicked { background: #888 !important; }
+        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .play-btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00f2ff; }
     </style>
 </head>
 <body>
 
-    <div id="screen" class="overlay">
-        <h1 id="title" style="color:#00f2ff">PIANO CASINO</h1>
-        <p id="msg">Owner's Profit (20%) is active.</p>
-        <button class="btn" onclick="startGame()">START GAME</button>
+    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT (20% CUT)</div>
+
+    <div id="game-container" onclick="checkMissClick(event)">
+        <div class="lane" id="lane0"></div>
+        <div class="lane" id="lane1"></div>
+        <div class="lane" id="lane2"></div>
+        <div class="lane" id="lane3"></div>
     </div>
 
-    <div class="dashboard">
-        <div>OWNER PROFIT (20%): <span id="p" class="profit-text">0.00</span> USDT</div>
+    <div id="menu">
+        <h1 id="status">PIANO CASINO PRO</h1>
+        <button class="play-btn" onclick="startProGame()">PLAY NOW</button>
     </div>
 
-    <div id="game-area">
-        <div class="lane" style="left:0%"></div><div class="lane" style="left:25%"></div>
-        <div class="lane" style="left:50%"></div><div class="lane" style="left:75%"></div>
-    </div>
-
-    <audio id="m" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="gameMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
 
     <script>
-        let profit = 0;
+        let score = 0;
         let gameActive = false;
-        let spawnInterval;
+        let speed = 5;
+        let tiles = [];
 
-        function startGame() {
-            document.getElementById('screen').style.display = 'none';
-            profit += 8.00; // Auto-calculate 20% commission
-            document.getElementById('p').innerText = profit.toFixed(2);
-            document.getElementById('m').play();
+        function startProGame() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('profit').innerText = (parseFloat(document.getElementById('profit').innerText) + 8.00).toFixed(2);
+            document.getElementById('gameMusic').play();
             gameActive = true;
-            spawnTiles();
+            spawnTileLoop();
+            requestAnimationFrame(update);
         }
 
         function gameOver() {
             gameActive = false;
-            clearInterval(spawnInterval);
-            document.getElementById('m').pause();
-            document.getElementById('m').currentTime = 0;
-            document.getElementById('screen').style.display = 'flex';
-            document.getElementById('title').innerText = "GAME OVER";
-            document.getElementById('title').style.color = "red";
-            document.getElementById('msg').innerText = "You missed a tile! Try again.";
+            document.getElementById('gameMusic').pause();
+            document.getElementById('gameMusic').currentTime = 0;
+            document.getElementById('status').innerText = "GAME OVER";
+            document.getElementById('status').style.color = "red";
+            document.getElementById('menu').style.display = 'flex';
+            tiles.forEach(t => t.remove());
+            tiles = [];
         }
 
-        function spawnTiles() {
-            spawnInterval = setInterval(() => {
-                if(!gameActive) return;
-                const laneIdx = Math.floor(Math.random() * 4);
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.style.top = '-100px';
-                
-                tile.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    tile.style.background = "#fff";
-                    setTimeout(() => tile.remove(), 50);
-                });
+        function spawnTileLoop() {
+            if (!gameActive) return;
+            const laneIndex = Math.floor(Math.random() * 4);
+            const lane = document.getElementById('lane' + laneIndex);
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.style.top = '-150px';
+            tile.onclick = (e) => {
+                e.stopPropagation();
+                tile.classList.add('tile-clicked');
+                tile.clicked = true;
+                setTimeout(() => tile.remove(), 100);
+            };
+            lane.appendChild(tile);
+            tiles.push(tile);
+            setTimeout(spawnTileLoop, 600);
+        }
 
-                document.getElementsByClassName('lane')[laneIdx].appendChild(tile);
+        function update() {
+            if (!gameActive) return;
+            for (let i = tiles.length - 1; i >= 0; i--) {
+                let t = tiles[i];
+                let top = parseFloat(t.style.top);
+                top += speed;
+                t.style.top = top + 'px';
 
-                let pos = -100;
-                const move = setInterval(() => {
-                    if (pos > window.innerHeight - 100) { 
-                        clearInterval(move);
-                        if(tile.parentNode) {
-                            tile.remove();
-                            gameOver(); // If tile reaches bottom, player loses
-                        }
-                    } else {
-                        pos += 6; 
-                        tile.style.top = pos + 'px';
-                    }
-                }, 16);
-            }, 700);
+                if (top > window.innerHeight - 60 && !t.clicked) {
+                    gameOver();
+                    return;
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        function checkMissClick(e) {
+            if (gameActive) gameOver(); // If player clicks white area, game over
         }
     </script>
 </body>
