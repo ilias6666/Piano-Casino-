@@ -6,18 +6,18 @@
     <title>Piano Casino Global Pro</title>
     <style>
         body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
-        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #00f2ff; }
-        #game-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #fff; display: flex; }
-        .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; }
-        .tile { position: absolute; width: 100%; height: 160px; background: #000; border-bottom: 2px solid #333; }
-        .clicked { background: #555 !important; }
-        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.4rem; font-weight: bold; margin-top: 20px; }
+        #owner-bar { height: 65px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-bottom: 3px solid #00f2ff; }
+        #game-container { position: relative; width: 100vw; height: calc(100vh - 65px); background: #fff; display: flex; }
+        .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; pointer-events: auto; }
+        .tile { position: absolute; width: 100%; height: 165px; background: #000; border-bottom: 2px solid #333; }
+        .clicked { background: #666 !important; }
+        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 18px 55px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
-<body onclick="missClick()">
+<body onclick="missClick(event)">
 
-    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT (20% CUT)</div>
+    <div id="owner-bar">OWNER PROFIT (20%): <span id="profit">0.00</span> USDT</div>
 
     <div id="game-container">
         <div class="lane" id="l0"></div>
@@ -27,8 +27,8 @@
     </div>
 
     <div id="menu">
-        <h1 id="stat" style="color:#00f2ff">PIANO CASINO PRO</h1>
-        <p id="sub">Tap start to earn 8.00 USDT</p>
+        <h1 id="stat" style="color:#00f2ff; font-size: 2.5rem;">PIANO CASINO PRO</h1>
+        <p id="sub" style="font-size: 1.2rem;">Owner Profit System Active</p>
         <button class="btn" onclick="startPro(event)">START GAME</button>
     </div>
 
@@ -37,7 +37,7 @@
     <script>
         let gameActive = false;
         let pAmount = 0;
-        let speed = 6;
+        let speed = 7;
         let tiles = [];
 
         function startPro(e) {
@@ -48,7 +48,7 @@
             document.getElementById('music').play();
             gameActive = true;
             spawn();
-            loop();
+            requestAnimationFrame(loop);
         }
 
         function gameOver(reason) {
@@ -69,36 +69,38 @@
             let lane = document.getElementById('l' + laneIdx);
             let tile = document.createElement('div');
             tile.className = 'tile';
-            tile.style.top = '-160px';
+            tile.style.top = '-165px';
             tile.ontouchstart = (e) => {
                 e.stopPropagation();
                 tile.classList.add('clicked');
                 tile.isClicked = true;
-                setTimeout(() => { tile.remove(); }, 50);
+                setTimeout(() => { tile.remove(); }, 60);
             };
             lane.appendChild(tile);
             tiles.push(tile);
-            setTimeout(spawn, 550);
+            setTimeout(spawn, 500); // Faster spawning for challenge
         }
 
         function loop() {
             if (!gameActive) return;
             for (let i = tiles.length - 1; i >= 0; i--) {
                 let t = tiles[i];
-                let top = parseFloat(t.style.top) || -160;
+                let top = parseFloat(t.style.top) || -165;
                 top += speed;
                 t.style.top = top + 'px';
 
-                if (top > window.innerHeight - 60 && !t.isClicked) {
-                    gameOver("You missed a black tile!");
+                if (top > window.innerHeight - 65 && !t.isClicked) {
+                    gameOver("Tile reached the bottom!");
                     return;
                 }
             }
             requestAnimationFrame(loop);
         }
 
-        function missClick() {
-            if (gameActive) gameOver("You touched the white area!");
+        function missClick(e) {
+            if (gameActive) {
+                gameOver("You touched the white space!");
+            }
         }
     </script>
 </body>
