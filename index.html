@@ -3,23 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Pro - VIP</title>
+    <title>Piano Casino VIP - Smooth Edition</title>
     <style>
-        body { margin: 0; background: #000; font-family: 'Arial', sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
-        #owner-bar { height: 60px; background: linear-gradient(90deg, #000, #1a1a1a); color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; box-shadow: 0 0 15px #00f2ff; }
-        #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; }
-        .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; }
-        .tile { position: absolute; width: 100%; height: 170px; background: #000; border-bottom: 3px solid #333; z-index: 10; border-radius: 0 0 5px 5px; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        .btn-play { background: #00f2ff; color: #000; border: none; padding: 15px 60px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00f2ff; margin: 10px; }
-        .btn-withdraw { background: #ffcc00; color: #000; border: none; padding: 10px 30px; border-radius: 20px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        #speed-info { position: absolute; top: 70px; left: 10px; color: #000; font-weight: bold; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px; z-index: 15; font-size: 0.8rem; }
+        body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; }
+        #owner-bar { height: 50px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; z-index: 20; position: relative; }
+        #game-area { display: flex; width: 100vw; height: calc(100vh - 50px); background: #fff; }
+        .lane { flex: 1; border-right: 1px solid #f0f0f0; position: relative; }
+        .tile { position: absolute; width: 100%; height: 160px; background: #000; z-index: 10; will-change: transform; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.4rem; font-weight: bold; margin-top: 15px; box-shadow: 0 0 15px #00f2ff; }
     </style>
 </head>
 <body onpointerdown="checkMiss(event)">
 
-    <div id="owner-bar">ESTIMATED PROFIT: <span id="profit">0.00</span> USDT</div>
-    <div id="speed-info">Level: <span id="lvl">1</span> | Speed: <span id="spd">Fast</span></div>
+    <div id="owner-bar">NET PROFIT: <span id="profit">0.00</span> USDT</div>
 
     <div id="game-area">
         <div class="lane" id="l0"></div><div class="lane" id="l1"></div>
@@ -27,96 +24,75 @@
     </div>
 
     <div id="overlay">
-        <h1 id="status" style="color:#00f2ff; font-size: 2.5rem; margin-bottom: 10px;">PIANO CASINO</h1>
-        <p id="msg" style="font-size: 1.2rem;">Ready to earn USDT?</p>
-        <button class="btn-play" onclick="start(event)">START SESSION</button>
-        <div id="withdraw-section" style="display:none;">
-            <button class="btn-withdraw" onclick="alert('Contact Admin to Withdraw USDT')">WITHDRAW PROFIT</button>
-        </div>
+        <h1 id="status" style="color:#00f2ff">PIANO CASINO PRO</h1>
+        <p id="msg">Level Up to Earn More</p>
+        <button class="btn" onclick="start(event)">START SESSION</button>
     </div>
 
-    <audio id="music" src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a731f2.mp3" loop></audio>
+    <audio id="music" src="https://www.soundjay.com/free-music/iron-man-01.mp3" loop preload="auto"></audio>
 
     <script>
-        let isRunning = false;
-        let pAmount = 0;
-        let currentSpeed = 6;
-        let tiles = [];
-        let level = 1;
+        let isRunning = false, pAmount = 0, speed = 6, tiles = [], level = 1;
+        const music = document.getElementById('music');
 
         function start(e) {
             e.stopPropagation();
             document.getElementById('overlay').style.display = 'none';
-            document.getElementById('withdraw-section').style.display = 'none';
-            pAmount += 8.50; 
+            pAmount += 8.00;
             document.getElementById('profit').innerText = pAmount.toFixed(2);
-            document.getElementById('music').play();
+            music.play().catch(() => {}); // محاولة تشغيل الصوت
             isRunning = true;
-            currentSpeed = 6;
-            level = 1;
-            updateInfo();
+            speed = 6;
             
-            // محرك زيادة الصعوبة التدريجي
-            let diffInterval = setInterval(() => {
-                if(!isRunning) { clearInterval(diffInterval); return; }
-                currentSpeed += 0.4;
-                level++;
-                updateInfo();
-            }, 4000);
+            // نظام تسارع ذكي لا يسبب تهنيج
+            const diffTimer = setInterval(() => {
+                if(!isRunning) clearInterval(diffTimer);
+                speed += 0.3;
+            }, 3000);
 
             spawn();
-            loop();
-        }
-
-        function updateInfo() {
-            document.getElementById('lvl').innerText = level;
-            document.getElementById('spd').innerText = currentSpeed.toFixed(1);
+            requestAnimationFrame(loop);
         }
 
         function gameOver() {
             isRunning = false;
-            document.getElementById('music').pause();
+            music.pause();
+            music.currentTime = 0;
             document.getElementById('overlay').style.display = 'flex';
             document.getElementById('status').innerText = "SESSION ENDED";
-            document.getElementById('status').style.color = "#ff4d4d";
-            document.getElementById('msg').innerText = "Game Speed was too high!";
-            document.getElementById('withdraw-section').style.display = 'block';
+            document.getElementById('status').style.color = "red";
             tiles.forEach(t => t.remove());
             tiles = [];
         }
 
         function spawn() {
             if (!isRunning) return;
-            let i = Math.floor(Math.random() * 4);
-            let lane = document.getElementById('l' + i);
-            let t = document.createElement('div');
+            const i = Math.floor(Math.random() * 4);
+            const lane = document.getElementById('l' + i);
+            const t = document.createElement('div');
             t.className = 'tile';
-            t.style.top = '-170px';
+            t.style.top = '-160px';
             
             t.onpointerdown = (e) => {
                 e.stopPropagation();
                 if (!t.hit) {
                     t.hit = true;
-                    t.style.background = "#444";
+                    t.style.background = "#666";
                     setTimeout(() => t.remove(), 50);
                 }
             };
-
             lane.appendChild(t);
             tiles.push(t);
-            
-            // توقيت الظهور يتقلص مع زيادة السرعة
-            let rate = Math.max(200, 550 - (level * 15));
-            setTimeout(spawn, rate);
+            setTimeout(spawn, Math.max(250, 600 - (speed * 15)));
         }
 
         function loop() {
             if (!isRunning) return;
             for (let i = tiles.length - 1; i >= 0; i--) {
                 let t = tiles[i];
-                let top = parseFloat(t.style.top) + currentSpeed;
+                let top = parseFloat(t.style.top) + speed;
                 t.style.top = top + 'px';
-                if (top > window.innerHeight - 60 && !t.hit) {
+                if (top > window.innerHeight - 50 && !t.hit) {
                     gameOver();
                     return;
                 }
@@ -130,3 +106,4 @@
     </script>
 </body>
 </html>
+
