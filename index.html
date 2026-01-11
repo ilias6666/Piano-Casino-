@@ -2,114 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Pro - Stable Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Piano Casino Pro - Turbo Mode</title>
     <style>
         body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
         #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; }
         #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; }
-        .lane { flex: 1; height: 100%; border-right: 1px solid #eee; position: relative; z-index: 5; }
-        .tile { position: absolute; width: 100%; height: 180px; background: #000; border-bottom: 2px solid #333; z-index: 10; transition: background 0.1s; }
-        .clicked { background: #444 !important; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
+        .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; }
+        .tile { position: absolute; width: 100%; height: 170px; background: #000; border-bottom: 2px solid #333; z-index: 10; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; box-shadow: 0 0 15px #00f2ff; }
+        #speed-tag { position: absolute; top: 70px; right: 20px; background: rgba(0,0,0,0.5); color: #fff; padding: 5px 10px; border-radius: 10px; font-size: 0.8rem; z-index: 15; }
     </style>
 </head>
-<body>
+<body onpointerdown="checkMiss(event)">
 
-    <div id="owner-bar">PROFIT: <span id="profit-val">0.00</span> USDT</div>
+    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT</div>
+    <div id="speed-tag">Speed: <span id="speed-val">1.0</span>x</div>
 
-    <div id="game-area" onpointerdown="handleMissClick(event)">
-        <div class="lane" id="lane0"></div>
-        <div class="lane" id="lane1"></div>
-        <div class="lane" id="lane2"></div>
-        <div class="lane" id="lane3"></div>
+    <div id="game-area">
+        <div class="lane" id="l0"></div><div class="lane" id="l1"></div>
+        <div class="lane" id="l2"></div><div class="lane" id="l3"></div>
     </div>
 
     <div id="overlay">
-        <h1 id="status-text">PIANO CASINO PRO</h1>
-        <p id="sub-text">20% Owner Profit System Active</p>
-        <button class="btn" onclick="startGame(event)">START GAME</button>
+        <h1 id="status" style="color:#00f2ff">PIANO CASINO PRO</h1>
+        <p>Dynamic Difficulty Active</p>
+        <button class="btn" onclick="start(event)">START GAME</button>
     </div>
 
-    <audio id="bg-music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" preload="auto"></audio>
+    <audio id="music" src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a731f2.mp3" loop></audio>
 
     <script>
-        let isGameRunning = false;
-        let totalProfit = 0;
-        let fallSpeed = 6.5; 
-        let activeTiles = [];
-        let spawnTimer;
+        let isRunning = false;
+        let pAmount = 0;
+        let baseSpeed = 5; 
+        let currentSpeed = 5;
+        let tiles = [];
+        let difficultyTimer;
 
-        function startGame(e) {
+        function start(e) {
             e.stopPropagation();
             document.getElementById('overlay').style.display = 'none';
-            totalProfit += 8.00;
-            document.getElementById('profit-val').innerText = totalProfit.toFixed(2);
-            document.getElementById('bg-music').play();
-            isGameRunning = true;
-            spawnTile();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function triggerGameOver(message) {
-            isGameRunning = false;
-            clearTimeout(spawnTimer);
-            document.getElementById('bg-music').pause();
-            document.getElementById('bg-music').currentTime = 0;
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('status-text').innerText = "GAME OVER";
-            document.getElementById('status-text').style.color = "#ff4d4d";
-            document.getElementById('sub-text').innerText = message;
-            activeTiles.forEach(t => t.remove());
-            activeTiles = [];
-        }
-
-        function spawnTile() {
-            if (!isGameRunning) return;
-            const laneIndex = Math.floor(Math.random() * 4);
-            const laneElement = document.getElementById('lane' + laneIndex);
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.style.top = '-180px';
+            pAmount += 8.00;
+            document.getElementById('profit').innerText = pAmount.toFixed(2);
+            document.getElementById('music').play();
+            isRunning = true;
+            currentSpeed = baseSpeed;
             
-            // إصلاح نظام اللمس لمنع الخسارة الفورية
-            tile.onpointerdown = (e) => {
-                e.stopPropagation(); 
-                if (!tile.isHit) {
-                    tile.isHit = true;
-                    tile.classList.add('clicked');
-                    // صوت نقرة تفاعلي
-                    new Audio('https://www.soundjay.com/button/button-37.mp3').play();
-                    setTimeout(() => { tile.remove(); }, 80);
+            // زيادة السرعة كل 5 ثوانٍ
+            difficultyTimer = setInterval(() => {
+                if(currentSpeed < 15) { // الحد الأقصى للسرعة
+                    currentSpeed += 0.5;
+                    document.getElementById('speed-val').innerText = (currentSpeed/5).toFixed(1);
+                }
+            }, 5000);
+
+            spawn();
+            loop();
+        }
+
+        function gameOver() {
+            isRunning = false;
+            clearInterval(difficultyTimer);
+            document.getElementById('music').pause();
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('status').innerText = "GAME OVER";
+            document.getElementById('status').style.color = "red";
+            tiles.forEach(t => t.remove());
+            tiles = [];
+        }
+
+        function spawn() {
+            if (!isRunning) return;
+            let i = Math.floor(Math.random() * 4);
+            let lane = document.getElementById('l' + i);
+            let t = document.createElement('div');
+            t.className = 'tile';
+            t.style.top = '-170px';
+            
+            t.onpointerdown = (e) => {
+                e.stopPropagation();
+                if (!t.hit) {
+                    t.hit = true;
+                    t.style.background = "#555";
+                    setTimeout(() => t.remove(), 70);
                 }
             };
 
-            laneElement.appendChild(tile);
-            activeTiles.push(tile);
-            spawnTimer = setTimeout(spawnTile, 550);
+            lane.appendChild(t);
+            tiles.push(t);
+            
+            // جعل وتيرة ظهور المربعات تتناسب مع السرعة
+            let spawnRate = Math.max(250, 600 - (currentSpeed * 20));
+            setTimeout(spawn, spawnRate);
         }
 
-        function gameLoop() {
-            if (!isGameRunning) return;
-            for (let i = activeTiles.length - 1; i >= 0; i--) {
-                let tile = activeTiles[i];
-                let currentTop = parseFloat(tile.style.top);
-                currentTop += fallSpeed;
-                tile.style.top = currentTop + 'px';
-
-                if (currentTop > window.innerHeight - 60 && !tile.isHit) {
-                    triggerGameOver("A tile reached the bottom!");
+        function loop() {
+            if (!isRunning) return;
+            for (let i = tiles.length - 1; i >= 0; i--) {
+                let t = tiles[i];
+                let top = parseFloat(t.style.top) + currentSpeed;
+                t.style.top = top + 'px';
+                if (top > window.innerHeight - 60 && !t.hit) {
+                    gameOver();
                     return;
                 }
             }
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(loop);
         }
 
-        function handleMissClick(e) {
-            if (isGameRunning) {
-                triggerGameOver("You touched the white space!");
-            }
+        function checkMiss(e) {
+            if (isRunning) gameOver();
         }
     </script>
 </body>
