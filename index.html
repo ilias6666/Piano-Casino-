@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Casino - الادارة</title>
+    <style>
+        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .owner-panel { border: 2px solid #ff0055; padding: 15px; border-radius: 15px; background: #111; margin-bottom: 20px; box-shadow: 0 0 15px #ff0055; }
+        .profit { color: #00ff88; font-size: 28px; font-weight: bold; }
+        #game-view { height: 250px; background: #000; border: 1px dashed #444; margin: 20px 0; display: flex; align-items: center; justify-content: center; color: #666; }
+        .btn { background: #ff0055; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; font-weight: bold; width: 100%; box-shadow: 0 4px 10px rgba(255,0,85,0.3); }
+    </style>
+</head>
+<body>
+    <div class="owner-panel">
+        <h2>لوحة المالك 👑</h2>
+        <p>رصيدك الحالي: <span id="balance">1000</span> USDT</p>
+        <hr style="border: 0.5px solid #333;">
+        <p>أرباحك الصافية (20%): <br><span id="myProfit" class="profit">0</span> USDT</p>
+    </div>
+
+    <div id="game-view">
+        <p>بانتظار إضافة Dance Monkey والمربعات...</p>
+    </div>
+
+    <button class="btn" onclick="simulateRound()">تشغيل جولة (4 لاعبين)</button>
+
+    <script>
+        let balance = 1000;
+        let profit = 0;
+        function simulateRound() {
+            const bet = 10; // رهان افتراضي
+            const total = bet * 4; // 40
+            const cut = total * 0.20; // 8 USDT لك
+            
+            balance -= bet;
+            profit += cut;
+            
+            document.getElementById('balance').innerText = balance;
+            document.getElementById('myProfit').innerText = profit.toFixed(2);
+            alert("تم بنجاح! حجزنا لك 8 USDT أرباح من هذه الجولة.");
+        }
+    </script>
+</body>
+</html>
