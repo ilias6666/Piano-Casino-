@@ -3,24 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Pro - Dance Monkey Edition</title>
+    <title>Piano Casino Pro - Fixed Version</title>
     <style>
-        /* تصميم عالمي احترافي - Piano Tiles Style */
-        body { margin: 0; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
-        
-        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; }
-        
-        #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; cursor: crosshair; }
-        
+        body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
+        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; }
+        #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; }
         .lane { flex: 1; height: 100%; border-right: 1px solid #eee; position: relative; z-index: 5; }
-        
-        .tile { position: absolute; width: 100%; height: 180px; background: #000; border-bottom: 2px solid #333; z-index: 10; border-radius: 2px; }
-        
-        .tile.clicked { background: #555 !important; }
+        .tile { position: absolute; width: 100%; height: 180px; background: #000; border-bottom: 2px solid #333; z-index: 10; }
+        .clicked { background: #555 !important; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
 
-        /* شاشة القائمة والخسارة */
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
-        
-        .play-btn { background: #00f2ff; color: #000; border: none; padding: 18px 60px; border-radius: 40px; font-size: 1.6rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px rgba(0, 242, 255, 0.5); margin-top: 20px; }
-        
-        #status-text { font-size: 2.5rem; color: #00f2ff; margin:
+    <div id="owner-bar">PROFIT: <span id="profit-val">0.00</span> USDT</div>
+
+    <div id="game-area" ontouchstart="handleMissClick(event)">
+        <div class="lane" id="lane0"></div>
+        <div class="lane" id="lane1"></div>
+        <div class="lane" id="lane2"></div>
+        <div class="lane" id="lane3"></div>
+    </div>
+
+    <div id="overlay">
+        <h1 id="status-text">PIANO CASINO PRO</h1>
+        <p id="sub-text">World Class Casino System Active</p>
+        <button class="btn" onclick="startGame(event)">PLAY NOW</button>
+    </div>
+
+    <audio id="bg-music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" preload="auto"></audio>
+
+    <script>
+        let isGameRunning = false;
+        let totalProfit = 0;
+        let fallSpeed = 6; 
+        let activeTiles = [];
+        let spawnTimer;
+
+        function startGame(e) {
+            e.stopPropagation();
+            document.getElementById('overlay').style.display = 'none';
+            totalProfit += 8.00;
+            document.getElementById('profit-val').innerText = totalProfit.toFixed(2);
+            document.getElementById('bg-music').play();
+            isGameRunning = true;
+            spawnTile();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function triggerGameOver(message) {
+            isGameRunning = false;
+            clearTimeout(spawnTimer);
+            document.getElementById('bg-music').pause();
+            document.getElementById('bg-music').currentTime = 0;
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('status-text').innerText = "GAME OVER";
+            document.getElementById('status-text').style.color = "#ff4d4d";
+            document.getElementById('sub-text').innerText = message;
+            activeTiles.forEach(t => t.remove());
+            activeTiles = [];
+        }
+
+        function spawnTile() {
+            if (!isGameRunning) return;
+            const laneIndex = Math.floor(Math.random() * 4);
+            const laneElement = document.getElementById('lane' + laneIndex);
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.style.top = '-180px';
+            
+            // منع الخسارة عند لمس المربع الأسود
+            tile.addEventListener('touchstart', (e) => {
+                e.stopPropagation(); // هذا السطر يمنع وصول اللمسة للخلفية البيضاء
+                if (!tile.isHit) {
+                    tile.isHit = true;
+                    tile.classList.add('clicked');
+                    setTimeout(() => { tile.remove(); }, 50);
+                }
+            });
+
+            laneElement.appendChild(tile);
+            activeTiles.push(tile);
+            spawnTimer = setTimeout(spawnTile, 600);
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+            for (let i = activeTiles.length - 1; i >= 0; i--) {
+                let tile = activeTiles[i];
+                let currentTop = parseFloat(tile.style.top);
+                currentTop += fallSpeed;
+                tile.style.top = currentTop + 'px';
+
+                if (currentTop > window.innerHeight - 60 && !tile.isHit) {
+                    triggerGameOver("A tile reached the bottom!");
+                    return;
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleMissClick(e) {
+            // الخسارة فقط إذا كان اللمس داخل منطقة اللعب وليس على المربعات
+            if (isGameRunning) {
+                triggerGameOver("You touched the white space!");
+            }
+        }
+    </script>
+</body>
+</html>
