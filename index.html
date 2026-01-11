@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino VIP - Smooth Edition</title>
+    <title>Piano Casino Pro - Smooth</title>
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #owner-bar { height: 50px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; z-index: 20; position: relative; }
         #game-area { display: flex; width: 100vw; height: calc(100vh - 50px); background: #fff; }
-        .lane { flex: 1; border-right: 1px solid #f0f0f0; position: relative; }
-        .tile { position: absolute; width: 100%; height: 160px; background: #000; z-index: 10; will-change: transform; }
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.4rem; font-weight: bold; margin-top: 15px; box-shadow: 0 0 15px #00f2ff; }
+        .lane { flex: 1; border-right: 1px solid #eee; position: relative; }
+        .tile { position: absolute; width: 100%; height: 160px; background: #000; z-index: 10; will-change: transform; border-radius: 0 0 10px 10px; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 60px; border-radius: 35px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; box-shadow: 0 0 20px #00f2ff; }
     </style>
 </head>
 <body onpointerdown="checkMiss(event)">
 
-    <div id="owner-bar">NET PROFIT: <span id="profit">0.00</span> USDT</div>
+    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT</div>
 
     <div id="game-area">
         <div class="lane" id="l0"></div><div class="lane" id="l1"></div>
@@ -24,31 +24,31 @@
     </div>
 
     <div id="overlay">
-        <h1 id="status" style="color:#00f2ff">PIANO CASINO PRO</h1>
-        <p id="msg">Level Up to Earn More</p>
-        <button class="btn" onclick="start(event)">START SESSION</button>
+        <h1 id="status" style="color:#00f2ff">PIANO CASINO</h1>
+        <p id="msg">Start slow, earn fast!</p>
+        <button class="btn" onclick="start(event)">START GAME</button>
     </div>
 
-    <audio id="music" src="https://www.soundjay.com/free-music/iron-man-01.mp3" loop preload="auto"></audio>
+    <audio id="music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
 
     <script>
-        let isRunning = false, pAmount = 0, speed = 6, tiles = [], level = 1;
-        const music = document.getElementById('music');
+        let isRunning = false, pAmount = 0, speed = 4, tiles = [];
 
         function start(e) {
             e.stopPropagation();
             document.getElementById('overlay').style.display = 'none';
             pAmount += 8.00;
             document.getElementById('profit').innerText = pAmount.toFixed(2);
-            music.play().catch(() => {}); // محاولة تشغيل الصوت
-            isRunning = true;
-            speed = 6;
+            document.getElementById('music').play().catch(() => {});
             
-            // نظام تسارع ذكي لا يسبب تهنيج
+            isRunning = true;
+            speed = 4; // سرعة بداية هادئة جداً (كانت 6)
+            
+            // زيادة السرعة ببطء شديد كل 10 ثوانٍ
             const diffTimer = setInterval(() => {
                 if(!isRunning) clearInterval(diffTimer);
-                speed += 0.3;
-            }, 3000);
+                if(speed < 12) speed += 0.5; 
+            }, 10000);
 
             spawn();
             requestAnimationFrame(loop);
@@ -56,11 +56,10 @@
 
         function gameOver() {
             isRunning = false;
-            music.pause();
-            music.currentTime = 0;
+            document.getElementById('music').pause();
             document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('status').innerText = "SESSION ENDED";
-            document.getElementById('status').style.color = "red";
+            document.getElementById('status').innerText = "GAME OVER";
+            document.getElementById('status').style.color = "#ff4d4d";
             tiles.forEach(t => t.remove());
             tiles = [];
         }
@@ -77,13 +76,15 @@
                 e.stopPropagation();
                 if (!t.hit) {
                     t.hit = true;
-                    t.style.background = "#666";
+                    t.style.background = "#444";
                     setTimeout(() => t.remove(), 50);
                 }
             };
             lane.appendChild(t);
             tiles.push(t);
-            setTimeout(spawn, Math.max(250, 600 - (speed * 15)));
+            
+            // ظهور المربعات متناسق مع السرعة المنخفضة
+            setTimeout(spawn, 750); 
         }
 
         function loop() {
@@ -106,4 +107,3 @@
     </script>
 </body>
 </html>
-
