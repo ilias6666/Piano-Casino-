@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Pro - Smooth</title>
+    <title>Piano Casino VIP</title>
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #owner-bar { height: 50px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; z-index: 20; position: relative; }
@@ -11,7 +11,7 @@
         .lane { flex: 1; border-right: 1px solid #eee; position: relative; }
         .tile { position: absolute; width: 100%; height: 160px; background: #000; z-index: 10; will-change: transform; border-radius: 0 0 10px 10px; }
         #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 60px; border-radius: 35px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; box-shadow: 0 0 20px #00f2ff; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 60px; border-radius: 35px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body onpointerdown="checkMiss(event)">
@@ -25,14 +25,14 @@
 
     <div id="overlay">
         <h1 id="status" style="color:#00f2ff">PIANO CASINO</h1>
-        <p id="msg">Start slow, earn fast!</p>
         <button class="btn" onclick="start(event)">START GAME</button>
     </div>
 
     <audio id="music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
 
     <script>
-        let isRunning = false, pAmount = 0, speed = 4, tiles = [];
+        let isRunning = false, pAmount = 0, speed = 5, tiles = [];
+        let lastSpawn = 0;
 
         function start(e) {
             e.stopPropagation();
@@ -42,15 +42,8 @@
             document.getElementById('music').play().catch(() => {});
             
             isRunning = true;
-            speed = 4; // سرعة بداية هادئة جداً (كانت 6)
-            
-            // زيادة السرعة ببطء شديد كل 10 ثوانٍ
-            const diffTimer = setInterval(() => {
-                if(!isRunning) clearInterval(diffTimer);
-                if(speed < 12) speed += 0.5; 
-            }, 10000);
-
-            spawn();
+            speed = 5; // سرعة بداية متوسطة ومتزنة
+            tiles = [];
             requestAnimationFrame(loop);
         }
 
@@ -65,12 +58,11 @@
         }
 
         function spawn() {
-            if (!isRunning) return;
             const i = Math.floor(Math.random() * 4);
             const lane = document.getElementById('l' + i);
             const t = document.createElement('div');
             t.className = 'tile';
-            t.style.top = '-160px';
+            t.style.top = '-170px';
             
             t.onpointerdown = (e) => {
                 e.stopPropagation();
@@ -82,17 +74,24 @@
             };
             lane.appendChild(t);
             tiles.push(t);
-            
-            // ظهور المربعات متناسق مع السرعة المنخفضة
-            setTimeout(spawn, 750); 
         }
 
-        function loop() {
+        function loop(timestamp) {
             if (!isRunning) return;
+
+            // التحكم في وقت ظهور المربعات ليتناسب مع السرعة
+            if (timestamp - lastSpawn > (1000 / (speed / 3))) {
+                spawn();
+                lastSpawn = timestamp;
+                // زيادة السرعة تدريجياً مع كل مربع يظهر
+                if (speed < 15) speed += 0.05; 
+            }
+
             for (let i = tiles.length - 1; i >= 0; i--) {
                 let t = tiles[i];
                 let top = parseFloat(t.style.top) + speed;
                 t.style.top = top + 'px';
+
                 if (top > window.innerHeight - 50 && !t.hit) {
                     gameOver();
                     return;
