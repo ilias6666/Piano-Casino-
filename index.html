@@ -1,84 +1,94 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Piano Casino Global 👑</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
-        .dashboard { height: 120px; background: #111; border-bottom: 3px solid #ff0055; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px #ff0055; }
-        .profit-val { color: #00ff88; font-size: 28px; font-weight: bold; text-shadow: 0 0 10px #00ff88; }
-        #game-stage { height: calc(100vh - 120px); width: 100%; position: relative; background: #050505; }
-        .lane { position: absolute; width: 25%; height: 100%; border-right: 1px solid #1a1a1a; }
-        .tile { position: absolute; width: 100%; height: 100px; background: linear-gradient(#ff0055, #80002b); border-radius: 5px; box-shadow: 0 0 15px #ff0055; }
+        body { background: #000; color: #fff; font-family: 'Arial', sans-serif; margin: 0; overflow: hidden; text-align: center; }
+        .dashboard { height: 100px; background: #111; border-bottom: 2px solid #00f2ff; display: flex; flex-direction: column; justify-content: center; }
+        .profit-text { color: #00ff88; font-size: 22px; font-weight: bold; }
+        #game-area { height: calc(100vh - 100px); width: 100%; position: relative; background: #050505; }
+        .lane { position: absolute; width: 25%; height: 100%; border-right: 1px solid #222; }
+        .tile { position: absolute; width: 100%; height: 100px; background: #00f2ff; box-shadow: 0 0 15px #00f2ff; border-radius: 5px; cursor: pointer; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-        .play-btn { background: #ff0055; color: white; border: none; padding: 20px 60px; border-radius: 50px; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #ff0055; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="startOverlay" class="overlay">
-        <h1 style="color:#ff0055">PIANO CASINO</h1>
-        <p>اضغط للبدء وتحصيل أرباحك (20%)</p>
-        <button class="play-btn" onclick="initGame()">دخول الكازينو 🎶</button>
+    <div id="screen" class="overlay">
+        <h1 id="title" style="color:#00f2ff">PIANO CASINO</h1>
+        <p id="msg">Owner's Profit (20%) is active.</p>
+        <button class="btn" onclick="startGame()">START GAME</button>
     </div>
 
     <div class="dashboard">
-        <div>أرباحك كمالك للكازينو (20%):</div>
-        <div class="profit-val"><span id="profit">0.00</span> USDT</div>
+        <div>OWNER PROFIT (20%): <span id="p" class="profit-text">0.00</span> USDT</div>
     </div>
 
-    <div id="game-stage">
-        <div class="lane" style="left:0%"></div>
-        <div class="lane" style="left:25%"></div>
-        <div class="lane" style="left:50%"></div>
-        <div class="lane" style="left:75%"></div>
+    <div id="game-area">
+        <div class="lane" style="left:0%"></div><div class="lane" style="left:25%"></div>
+        <div class="lane" style="left:50%"></div><div class="lane" style="left:75%"></div>
     </div>
 
-    <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" preload="auto"></audio>
+    <audio id="m" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
 
     <script>
-        let myProfit = 0;
-        const audio = document.getElementById('bgMusic');
+        let profit = 0;
+        let gameActive = false;
+        let spawnInterval;
 
-        function initGame() {
-            // إخفاء شاشة البداية وتشغيل الصوت
-            document.getElementById('startOverlay').style.display = 'none';
-            audio.play();
-            
-            // إضافة الربح فوراً (محاكاة لدخول 4 لاعبين برهان 10$)
-            myProfit += 8.00; 
-            document.getElementById('profit').innerText = myProfit.toFixed(2);
-            
+        function startGame() {
+            document.getElementById('screen').style.display = 'none';
+            profit += 8.00; // Auto-calculate 20% commission
+            document.getElementById('p').innerText = profit.toFixed(2);
+            document.getElementById('m').play();
+            gameActive = true;
             spawnTiles();
         }
 
+        function gameOver() {
+            gameActive = false;
+            clearInterval(spawnInterval);
+            document.getElementById('m').pause();
+            document.getElementById('m').currentTime = 0;
+            document.getElementById('screen').style.display = 'flex';
+            document.getElementById('title').innerText = "GAME OVER";
+            document.getElementById('title').style.color = "red";
+            document.getElementById('msg').innerText = "You missed a tile! Try again.";
+        }
+
         function spawnTiles() {
-            setInterval(() => {
+            spawnInterval = setInterval(() => {
+                if(!gameActive) return;
                 const laneIdx = Math.floor(Math.random() * 4);
                 const tile = document.createElement('div');
                 tile.className = 'tile';
                 tile.style.top = '-100px';
                 
-                tile.addEventListener('touchstart', function(e) {
+                tile.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    this.style.background = '#00f2ff';
-                    setTimeout(() => this.remove(), 100);
+                    tile.style.background = "#fff";
+                    setTimeout(() => tile.remove(), 50);
                 });
 
                 document.getElementsByClassName('lane')[laneIdx].appendChild(tile);
 
                 let pos = -100;
                 const move = setInterval(() => {
-                    if (pos > window.innerHeight) { 
-                        clearInterval(move); 
-                        tile.remove(); 
+                    if (pos > window.innerHeight - 100) { 
+                        clearInterval(move);
+                        if(tile.parentNode) {
+                            tile.remove();
+                            gameOver(); // If tile reaches bottom, player loses
+                        }
                     } else {
                         pos += 6; 
                         tile.style.top = pos + 'px';
                     }
                 }, 16);
-            }, 600);
+            }, 700);
         }
     </script>
 </body>
