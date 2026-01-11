@@ -6,95 +6,99 @@
     <title>Piano Casino Global Pro</title>
     <style>
         body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
-        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid #00f2ff; }
-        #game-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #eee; display: flex; }
-        .lane { flex: 1; height: 100%; border-right: 1px solid #ccc; position: relative; }
-        .tile { position: absolute; width: 100%; height: 150px; background: #000; cursor: pointer; border-bottom: 1px solid #333; }
-        .tile-clicked { background: #888 !important; }
-        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .play-btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00f2ff; }
+        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #00f2ff; }
+        #game-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #fff; display: flex; }
+        .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; }
+        .tile { position: absolute; width: 100%; height: 160px; background: #000; border-bottom: 2px solid #333; }
+        .clicked { background: #555 !important; }
+        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.4rem; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
-<body>
+<body onclick="missClick()">
 
     <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT (20% CUT)</div>
 
-    <div id="game-container" onclick="checkMissClick(event)">
-        <div class="lane" id="lane0"></div>
-        <div class="lane" id="lane1"></div>
-        <div class="lane" id="lane2"></div>
-        <div class="lane" id="lane3"></div>
+    <div id="game-container">
+        <div class="lane" id="l0"></div>
+        <div class="lane" id="l1"></div>
+        <div class="lane" id="l2"></div>
+        <div class="lane" id="l3"></div>
     </div>
 
     <div id="menu">
-        <h1 id="status">PIANO CASINO PRO</h1>
-        <button class="play-btn" onclick="startProGame()">PLAY NOW</button>
+        <h1 id="stat" style="color:#00f2ff">PIANO CASINO PRO</h1>
+        <p id="sub">Tap start to earn 8.00 USDT</p>
+        <button class="btn" onclick="startPro(event)">START GAME</button>
     </div>
 
-    <audio id="gameMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+    <audio id="music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
 
     <script>
-        let score = 0;
         let gameActive = false;
-        let speed = 5;
+        let pAmount = 0;
+        let speed = 6;
         let tiles = [];
 
-        function startProGame() {
+        function startPro(e) {
+            e.stopPropagation();
             document.getElementById('menu').style.display = 'none';
-            document.getElementById('profit').innerText = (parseFloat(document.getElementById('profit').innerText) + 8.00).toFixed(2);
-            document.getElementById('gameMusic').play();
+            pAmount += 8.00;
+            document.getElementById('profit').innerText = pAmount.toFixed(2);
+            document.getElementById('music').play();
             gameActive = true;
-            spawnTileLoop();
-            requestAnimationFrame(update);
+            spawn();
+            loop();
         }
 
-        function gameOver() {
+        function gameOver(reason) {
             gameActive = false;
-            document.getElementById('gameMusic').pause();
-            document.getElementById('gameMusic').currentTime = 0;
-            document.getElementById('status').innerText = "GAME OVER";
-            document.getElementById('status').style.color = "red";
+            document.getElementById('music').pause();
+            document.getElementById('music').currentTime = 0;
+            document.getElementById('stat').innerText = "GAME OVER";
+            document.getElementById('stat').style.color = "red";
+            document.getElementById('sub').innerText = reason;
             document.getElementById('menu').style.display = 'flex';
             tiles.forEach(t => t.remove());
             tiles = [];
         }
 
-        function spawnTileLoop() {
+        function spawn() {
             if (!gameActive) return;
-            const laneIndex = Math.floor(Math.random() * 4);
-            const lane = document.getElementById('lane' + laneIndex);
-            const tile = document.createElement('div');
+            let laneIdx = Math.floor(Math.random() * 4);
+            let lane = document.getElementById('l' + laneIdx);
+            let tile = document.createElement('div');
             tile.className = 'tile';
-            tile.style.top = '-150px';
-            tile.onclick = (e) => {
+            tile.style.top = '-160px';
+            tile.ontouchstart = (e) => {
                 e.stopPropagation();
-                tile.classList.add('tile-clicked');
-                tile.clicked = true;
-                setTimeout(() => tile.remove(), 100);
+                tile.classList.add('clicked');
+                tile.isClicked = true;
+                setTimeout(() => { tile.remove(); }, 50);
             };
             lane.appendChild(tile);
             tiles.push(tile);
-            setTimeout(spawnTileLoop, 600);
+            setTimeout(spawn, 550);
         }
 
-        function update() {
+        function loop() {
             if (!gameActive) return;
             for (let i = tiles.length - 1; i >= 0; i--) {
                 let t = tiles[i];
-                let top = parseFloat(t.style.top);
+                let top = parseFloat(t.style.top) || -160;
                 top += speed;
                 t.style.top = top + 'px';
 
-                if (top > window.innerHeight - 60 && !t.clicked) {
-                    gameOver();
+                if (top > window.innerHeight - 60 && !t.isClicked) {
+                    gameOver("You missed a black tile!");
                     return;
                 }
             }
-            requestAnimationFrame(update);
+            requestAnimationFrame(loop);
         }
 
-        function checkMissClick(e) {
-            if (gameActive) gameOver(); // If player clicks white area, game over
+        function missClick() {
+            if (gameActive) gameOver("You touched the white area!");
         }
     </script>
 </body>
