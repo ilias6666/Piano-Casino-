@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Piano Casino Pro - Turbo Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Piano Casino Pro - VIP</title>
     <style>
-        body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
-        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; }
+        body { margin: 0; background: #000; font-family: 'Arial', sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
+        #owner-bar { height: 60px; background: linear-gradient(90deg, #000, #1a1a1a); color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; box-shadow: 0 0 15px #00f2ff; }
         #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; }
         .lane { flex: 1; height: 100%; border-right: 1px solid #ddd; position: relative; }
-        .tile { position: absolute; width: 100%; height: 170px; background: #000; border-bottom: 2px solid #333; z-index: 10; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; box-shadow: 0 0 15px #00f2ff; }
-        #speed-tag { position: absolute; top: 70px; right: 20px; background: rgba(0,0,0,0.5); color: #fff; padding: 5px 10px; border-radius: 10px; font-size: 0.8rem; z-index: 15; }
+        .tile { position: absolute; width: 100%; height: 170px; background: #000; border-bottom: 3px solid #333; z-index: 10; border-radius: 0 0 5px 5px; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
+        .btn-play { background: #00f2ff; color: #000; border: none; padding: 15px 60px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00f2ff; margin: 10px; }
+        .btn-withdraw { background: #ffcc00; color: #000; border: none; padding: 10px 30px; border-radius: 20px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        #speed-info { position: absolute; top: 70px; left: 10px; color: #000; font-weight: bold; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px; z-index: 15; font-size: 0.8rem; }
     </style>
 </head>
 <body onpointerdown="checkMiss(event)">
 
-    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT</div>
-    <div id="speed-tag">Speed: <span id="speed-val">1.0</span>x</div>
+    <div id="owner-bar">ESTIMATED PROFIT: <span id="profit">0.00</span> USDT</div>
+    <div id="speed-info">Level: <span id="lvl">1</span> | Speed: <span id="spd">Fast</span></div>
 
     <div id="game-area">
         <div class="lane" id="l0"></div><div class="lane" id="l1"></div>
@@ -26,9 +27,12 @@
     </div>
 
     <div id="overlay">
-        <h1 id="status" style="color:#00f2ff">PIANO CASINO PRO</h1>
-        <p>Dynamic Difficulty Active</p>
-        <button class="btn" onclick="start(event)">START GAME</button>
+        <h1 id="status" style="color:#00f2ff; font-size: 2.5rem; margin-bottom: 10px;">PIANO CASINO</h1>
+        <p id="msg" style="font-size: 1.2rem;">Ready to earn USDT?</p>
+        <button class="btn-play" onclick="start(event)">START SESSION</button>
+        <div id="withdraw-section" style="display:none;">
+            <button class="btn-withdraw" onclick="alert('Contact Admin to Withdraw USDT')">WITHDRAW PROFIT</button>
+        </div>
     </div>
 
     <audio id="music" src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a731f2.mp3" loop></audio>
@@ -36,39 +40,47 @@
     <script>
         let isRunning = false;
         let pAmount = 0;
-        let baseSpeed = 5; 
-        let currentSpeed = 5;
+        let currentSpeed = 6;
         let tiles = [];
-        let difficultyTimer;
+        let level = 1;
 
         function start(e) {
             e.stopPropagation();
             document.getElementById('overlay').style.display = 'none';
-            pAmount += 8.00;
+            document.getElementById('withdraw-section').style.display = 'none';
+            pAmount += 8.50; 
             document.getElementById('profit').innerText = pAmount.toFixed(2);
             document.getElementById('music').play();
             isRunning = true;
-            currentSpeed = baseSpeed;
+            currentSpeed = 6;
+            level = 1;
+            updateInfo();
             
-            // زيادة السرعة كل 5 ثوانٍ
-            difficultyTimer = setInterval(() => {
-                if(currentSpeed < 15) { // الحد الأقصى للسرعة
-                    currentSpeed += 0.5;
-                    document.getElementById('speed-val').innerText = (currentSpeed/5).toFixed(1);
-                }
-            }, 5000);
+            // محرك زيادة الصعوبة التدريجي
+            let diffInterval = setInterval(() => {
+                if(!isRunning) { clearInterval(diffInterval); return; }
+                currentSpeed += 0.4;
+                level++;
+                updateInfo();
+            }, 4000);
 
             spawn();
             loop();
         }
 
+        function updateInfo() {
+            document.getElementById('lvl').innerText = level;
+            document.getElementById('spd').innerText = currentSpeed.toFixed(1);
+        }
+
         function gameOver() {
             isRunning = false;
-            clearInterval(difficultyTimer);
             document.getElementById('music').pause();
             document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('status').innerText = "GAME OVER";
-            document.getElementById('status').style.color = "red";
+            document.getElementById('status').innerText = "SESSION ENDED";
+            document.getElementById('status').style.color = "#ff4d4d";
+            document.getElementById('msg').innerText = "Game Speed was too high!";
+            document.getElementById('withdraw-section').style.display = 'block';
             tiles.forEach(t => t.remove());
             tiles = [];
         }
@@ -85,17 +97,17 @@
                 e.stopPropagation();
                 if (!t.hit) {
                     t.hit = true;
-                    t.style.background = "#555";
-                    setTimeout(() => t.remove(), 70);
+                    t.style.background = "#444";
+                    setTimeout(() => t.remove(), 50);
                 }
             };
 
             lane.appendChild(t);
             tiles.push(t);
             
-            // جعل وتيرة ظهور المربعات تتناسب مع السرعة
-            let spawnRate = Math.max(250, 600 - (currentSpeed * 20));
-            setTimeout(spawn, spawnRate);
+            // توقيت الظهور يتقلص مع زيادة السرعة
+            let rate = Math.max(200, 550 - (level * 15));
+            setTimeout(spawn, rate);
         }
 
         function loop() {
