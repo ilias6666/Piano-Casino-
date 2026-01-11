@@ -3,101 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piano Casino Global</title>
+    <title>Piano Casino Pro - Dance Monkey Edition</title>
     <style>
-        body { margin: 0; background: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
-        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; border-bottom: 2px solid #00f2ff; position: relative; z-index: 10; }
-        #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; }
-        .lane { flex: 1; height: 100%; border-right: 1px solid #eee; position: relative; }
-        .tile { position: absolute; width: 100%; height: 180px; background: #000; border-bottom: 2px solid #333; }
-        .clicked { background: #999 !important; }
-        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
-        .btn { background: #00f2ff; color: #000; border: none; padding: 15px 50px; border-radius: 40px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; }
-    </style>
-</head>
-<body onclick="checkMiss(event)">
+        /* تصميم عالمي احترافي - Piano Tiles Style */
+        body { margin: 0; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; touch-action: none; -webkit-user-select: none; }
+        
+        #owner-bar { height: 60px; background: #000; color: #00ff88; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #00f2ff; position: relative; z-index: 20; }
+        
+        #game-area { display: flex; width: 100vw; height: calc(100vh - 60px); position: relative; background: #fff; cursor: crosshair; }
+        
+        .lane { flex: 1; height: 100%; border-right: 1px solid #eee; position: relative; z-index: 5; }
+        
+        .tile { position: absolute; width: 100%; height: 180px; background: #000; border-bottom: 2px solid #333; z-index: 10; border-radius: 2px; }
+        
+        .tile.clicked { background: #555 !important; }
 
-    <div id="owner-bar">PROFIT: <span id="profit">0.00</span> USDT (20% CUT)</div>
-
-    <div id="game-area">
-        <div class="lane" id="l0"></div><div class="lane" id="l1"></div>
-        <div class="lane" id="l2"></div><div class="lane" id="l3"></div>
-    </div>
-
-    <div id="menu">
-        <h1 id="status" style="color:#00f2ff">PIANO CASINO PRO</h1>
-        <p id="msg">Dance Monkey - Global Edition</p>
-        <button class="btn" onclick="start(event)">START GAME</button>
-    </div>
-
-    <audio id="music" src="https://cdn.pixabay.com/audio/2022/05/27/audio_1808f30730.mp3" preload="auto"></audio>
-
-
-    <script>
-        let gameActive = false;
-        let p = 0;
-        let speed = 8;
-        let tiles = [];
-
-        function start(e) {
-            e.stopPropagation();
-            document.getElementById('menu').style.display = 'none';
-            p += 8.00;
-            document.getElementById('profit').innerText = p.toFixed(2);
-            document.getElementById('music').play();
-            gameActive = true;
-            spawn();
-            loop();
-        }
-
-        function gameOver(m) {
-            gameActive = false;
-            document.getElementById('music').pause();
-            document.getElementById('music').currentTime = 0;
-            document.getElementById('status').innerText = "GAME OVER";
-            document.getElementById('status').style.color = "red";
-            document.getElementById('msg').innerText = m;
-            document.getElementById('menu').style.display = 'flex';
-            tiles.forEach(t => t.remove());
-            tiles = [];
-        }
-
-        function spawn() {
-            if (!gameActive) return;
-            let i = Math.floor(Math.random() * 4);
-            let l = document.getElementById('l' + i);
-            let t = document.createElement('div');
-            t.className = 'tile';
-            t.style.top = '-180px';
-            t.ontouchstart = (e) => {
-                e.stopPropagation();
-                t.classList.add('clicked');
-                t.hit = true;
-                setTimeout(() => t.remove(), 50);
-            };
-            l.appendChild(t);
-            tiles.push(t);
-            setTimeout(spawn, 450); // Speed up spawning for rhythm
-        }
-
-        function loop() {
-            if (!gameActive) return;
-            for (let i = tiles.length - 1; i >= 0; i--) {
-                let t = tiles[i];
-                let top = parseFloat(t.style.top) || -180;
-                top += speed;
-                t.style.top = top + 'px';
-                if (top > window.innerHeight - 60 && !t.hit) {
-                    gameOver("You missed a tile!");
-                    return;
-                }
-            }
-            requestAnimationFrame(loop);
-        }
-
-        function checkMiss(e) {
-            if (gameActive) gameOver("You touched the white area!");
-        }
-    </script>
-</body>
-</html>
+        /* شاشة القائمة والخسارة */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; }
+        
+        .play-btn { background: #00f2ff; color: #000; border: none; padding: 18px 60px; border-radius: 40px; font-size: 1.6rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px rgba(0, 242, 255, 0.5); margin-top: 20px; }
+        
+        #status-text { font-size: 2.5rem; color: #00f2ff; margin:
